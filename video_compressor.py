@@ -1,25 +1,32 @@
 import os
-from moviepy.editor import VideoFileClip
-import math
 import time
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 
+import subprocess
+
 def compress_video(input_path, output_path, target_size_mb):
-    """Compress the video to be smaller than or equal to target_size_mb."""
-    clip = VideoFileClip(input_path)
-    filesize = os.path.getsize(input_path) / (1024 * 1024)  # Convert to MB
+    """Compress the video to be smaller than or equal to target_size_mb using FFmpeg."""
+    target_size_bytes = target_size_mb * 1024 * 1024  # Convert MB to bytes
 
-    # If file is already smaller than target, just copy it
-    if filesize <= target_size_mb:
-        clip.write_videofile(output_path)
-        return
+    # Use FFmpeg to compress the video
+    command = [
+        "ffmpeg", 
+        "-i", input_path, 
+        "-b:v", "1000k",  # Example bitrate, adjust as necessary
+        "-maxrate", "1000k",
+        "-bufsize", "2000k",
+        "-vf", "scale=-2:720",  # Example scaling; adjust as necessary
+        output_path
+    ]
 
-    # Calculate target bitrate for compression
-    target_bitrate = (target_size_mb * 1024 * 1024 * 8) / clip.duration  # in bits per second
+    # Execute the command
+    subprocess.run(command, check=True)
 
-    # Export with the target bitrate
-    clip.write_videofile(output_path, bitrate=f"{math.floor(target_bitrate)}k")
+    # Check output file size and adjust if necessary
+    if os.path.getsize(output_path) > target_size_bytes:
+        print(f"Warning: Output file '{output_path}' is larger than {target_size_mb} MB.")
+
 
 def find_next_clip_name(folder_path):
     """Find the next available 'Clip (n)' name in the target folder."""
