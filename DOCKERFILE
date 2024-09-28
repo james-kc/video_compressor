@@ -1,0 +1,19 @@
+# Use the official Python image from the Docker Hub
+FROM python:3.9-slim
+
+# Set the working directory inside the container
+WORKDIR /usr/src/app
+
+# Copy the requirements file and install dependencies
+COPY requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy the rest of the application code into the container
+COPY . .
+
+# Set up environment variables (Optional)
+ENV INPUT_FOLDER=/input_folder
+ENV OUTPUT_FOLDER=/clips_folder
+
+# Run the script
+CMD ["python", "video_compressor.py"]
